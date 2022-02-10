@@ -7,6 +7,11 @@
 #include "pitches.h"
 #include "numberOne.h"
 
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include "Adafruit_BMP3XX.h"
+
 //LoRa
 #define BAND    915E6  //you can set band here directly,e.g. 868E6,915E6
 
@@ -16,16 +21,7 @@
 #error Select ESP32 board.
 #endif
 
-//definitions for OLED display
-#ifdef U8X8_HAVE_HW_SPI
-#include <SPI.h>
-#endif
-#ifdef U8X8_HAVE_HW_I2C
-#include <Wire.h>
-#endif
-
-//create OLED display object
-U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
+#define SEALEVELPRESSURE_HPA (1013.25)
 
 //define pins used in this project
 int dhtPin = 10; //wired
@@ -36,13 +32,16 @@ int solenoidpin = 25;
 const int pwmChannel = 0;
 
 //sensor and timing variables
-int interval = 2000;
+int interval =  2000;
 unsigned long previousMillis = 0;
 TempAndHumidity newValues;
 DHTesp dht;
 
 //soil sensor
 Adafruit_seesaw ss;
+
+//pressure sensor
+Adafruit_BMP3XX bmp;
 
 //LoRa variables
 String outgoing;              // outgoing message
@@ -121,12 +120,23 @@ void setup()
   dht.setup(dhtPin, DHTesp::DHT11);
   Serial.println("DHT initiated");
   
-  //LoRa.setSpreadingFactor(8);
+  LoRa.setSpreadingFactor(8);
 
   //buzzer
   ledcAttachPin(buzzerPin, pwmChannel);
+
+  //pressure sensor
+  if (!bmp.begin_I2C()) {   // hardware I2C mode, can pass in address & alt Wire
+  //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
+  //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
+    Serial.println("Could not find a valid BMP3 sensor, check wiring!");
+    while (1);
+  }
+  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
+  bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
+  bmp.setOutputDataRate(BMP3_ODR_50_HZ);
   
-  //u8g2.begin();
 
   //initialize soil sensor
   if (!ss.begin(0x36)) {
@@ -150,46 +160,51 @@ void loop()
     //read sensors
     getTemperature();
     //float tempC = ss.getTemp();
+    
     capread = ss.touchRead(0);    
 
     Serial.print("Temperature: "); Serial.println(newValues.temperature);
     Serial.print("Humidity: "); Serial.println(newValues.humidity);
     Serial.print("Moisture: "); Serial.println(capread);
-    
-//Add LoRa stuff here later
-    char buffer[50];
-//    sprintf(buffer, "%g", newValues.temperature);
-//    //sendMessage(buffer);
-//    //Serial.println("Sending message");
 
-    //send data to OLED display - commented out b/c it conflicts with the soil sensor
-//    u8g2.clearBuffer();          // clear the internal memory
-//    u8g2.setFont(u8g2_font_ncenB08_tr); // choose a suitable font
-//    sprintf(buffer, "Temperature: %g °C", newValues.temperature);
-//    u8g2.drawStr(0,10, buffer);  // write something to the internal memory
-//    sprintf(buffer, "Humidity: %d", newValues.humidity);
-//    u8g2.drawStr(0,30, buffer);  // write something to the internal memory
-//    sprintf(buffer, "Moisture: %d", capread);
-//    u8g2.drawStr(0,50, buffer);  // write something to the internal memory
-//    u8g2.sendBuffer(); 
+    if (! bmp.performReading()) {
+      Serial.println("Failed to perform reading :(");
+      return;
+    }
+
+    Serial.print("Pressure = ");
+    Serial.print(bmp.pressure / 100.0);
+    Serial.println(" hPa");
+
+    Serial.print("Approx. Altitude = ");
+    double alt = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    Serial.print(alt);
+    Serial.println(" m");
+    
+//LoRa stuff 
+    char buffer[50];
+    sprintf(buffer, "%g, %g, %d, %g, %g" newValues.temperature, newValues.humidity, capread, bmp.pressure, alt);
+    sendMessage(buffer);
+    Serial.println("Sending message");
+
   }
 
-  for (int thisNote = 0; thisNote < 8; thisNote++) {
-
-        // to calculate the note duration, take one second divided by the note type.
-        //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-        int noteDuration = 1000 / noteDurations[thisNote];
-        ledcWriteNote(pwmChannel, melody[thisNote], octave[thisNote]);
-        delay(noteDuration);
-    
-        // to distinguish the notes, set a minimum time between them.
-        // the note's duration + 30% seems to work well:
-        int pauseBetweenNotes = noteDuration * 1.30;
-        delay(pauseBetweenNotes);
-        // stop the tone playing:
-        ledcWriteTone(pwmChannel, 0);
-        delay(15);
-    }
+//  for (int thisNote = 0; thisNote < 8; thisNote++) {
+//
+//        // to calculate the note duration, take one second divided by the note type.
+//        //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+//        int noteDuration = 1000 / noteDurations[thisNote];
+//        ledcWriteNote(pwmChannel, melody[thisNote], octave[thisNote]);
+//        delay(noteDuration);
+//    
+//        // to distinguish the notes, set a minimum time between them.
+//        // the note's duration + 30% seems to work well:
+//        int pauseBetweenNotes = noteDuration * 1.30;
+//        delay(pauseBetweenNotes);
+//        // stop the tone playing:
+//        ledcWriteTone(pwmChannel, 0);
+//        delay(15);
+//    }
   // parse for a packet, and call onReceive with the result:
   onReceive(LoRa.parsePacket());
 }
