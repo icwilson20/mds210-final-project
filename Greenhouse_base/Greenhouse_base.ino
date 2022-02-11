@@ -32,7 +32,7 @@ int solenoidpin = 25;
 const int pwmChannel = 0;
 
 //sensor and timing variables
-int interval =  2000;
+int interval =  30000;
 unsigned long previousMillis = 0;
 TempAndHumidity newValues;
 DHTesp dht;
@@ -45,6 +45,7 @@ Adafruit_BMP3XX bmp;
 
 //LoRa variables
 String outgoing;              // outgoing message
+int code = -1;                //which action to take
 
 byte localAddress = 0xBC;     // address of this device
 byte destination = 0xAB;      // destination to send to
@@ -183,30 +184,38 @@ void loop()
     
 //LoRa stuff 
     char buffer[50];
-    sprintf(buffer, "%g, %g, %d, %g, %g" newValues.temperature, newValues.humidity, capread, bmp.pressure, alt);
+    sprintf(buffer, "%g, %g, %d, %g, %g", newValues.temperature, newValues.humidity, capread, bmp.pressure, alt);
     sendMessage(buffer);
     Serial.println("Sending message");
 
   }
 
-//  for (int thisNote = 0; thisNote < 8; thisNote++) {
-//
-//        // to calculate the note duration, take one second divided by the note type.
-//        //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-//        int noteDuration = 1000 / noteDurations[thisNote];
-//        ledcWriteNote(pwmChannel, melody[thisNote], octave[thisNote]);
-//        delay(noteDuration);
-//    
-//        // to distinguish the notes, set a minimum time between them.
-//        // the note's duration + 30% seems to work well:
-//        int pauseBetweenNotes = noteDuration * 1.30;
-//        delay(pauseBetweenNotes);
-//        // stop the tone playing:
-//        ledcWriteTone(pwmChannel, 0);
-//        delay(15);
-//    }
+  if(code == 0){
+    code = -1;
+    //solenoid stuff goes here
+  } 
+  
+  if(code == 1){
+    code = -1;
+    //song stuff goes here
+    play_a_song();
+  }
+  
+  if(code == 2){
+    code = -1;
+    //open window here
+  } 
+  
+  if(code == 3){
+    code = -1;
+    //close window here
+  }
+
   // parse for a packet, and call onReceive with the result:
-  onReceive(LoRa.parsePacket());
+  int temp = onReceive(LoRa.parsePacket());
+  if(temp != -1){
+    code = temp;
+  }
 }
 
 void sendMessage(String outgoing)
@@ -221,9 +230,9 @@ void sendMessage(String outgoing)
   msgCount++;                           // increment message ID
 }
 
-void onReceive(int packetSize)
+int onReceive(int packetSize)
 {
-  if (packetSize == 0) return;          // if there's no packet, return
+  if (packetSize == 0) return -1;          // if there's no packet, return
 
   // read packet header bytes:
   int recipient = LoRa.read();          // recipient address
@@ -241,13 +250,13 @@ void onReceive(int packetSize)
   if (incomingLength != incoming.length())
   {   // check length for error
     Serial.println("error: message length does not match length");
-    return;                             // skip rest of function
+    return -1;                             // skip rest of function
   }
 
   // if the recipient isn't this device or broadcast,
   if (recipient != localAddress && recipient != 0xFF) {
     Serial.println("This message is not for me.");
-    return;                             // skip rest of function
+    return -1;                             // skip rest of function
   }
 
   // if message is for this device, or broadcast, print details:
@@ -259,4 +268,24 @@ void onReceive(int packetSize)
   Serial.println("RSSI: " + String(LoRa.packetRssi()));
   Serial.println("Snr: " + String(LoRa.packetSnr()));
   Serial.println();
+  return incoming.toInt();
+}
+
+void play_a_song(){
+    for (int thisNote = 0; thisNote < 8; thisNote++) {
+
+        // to calculate the note duration, take one second divided by the note type.
+        //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+        int noteDuration = 1000 / noteDurations[thisNote];
+        ledcWriteNote(pwmChannel, melody[thisNote], octave[thisNote]);
+        delay(noteDuration);
+    
+        // to distinguish the notes, set a minimum time between them.
+        // the note's duration + 30% seems to work well:
+        int pauseBetweenNotes = noteDuration * 1.30;
+        delay(pauseBetweenNotes);
+        // stop the tone playing:
+        ledcWriteTone(pwmChannel, 0);
+        delay(15);
+    }
 }
