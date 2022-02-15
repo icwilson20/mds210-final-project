@@ -26,10 +26,11 @@
 //define pins used in this project
 int dhtPin = 10; //wired
 int buzzerPin = 23; //wired
-int servopin = 9;
+int servoPin = 4;
 int servoRelayPin = 12;
 int solenoidpin = 25;
-const int pwmChannel = 0;
+
+Servo myServo;
 
 //sensor and timing variables
 int interval =  30000;
@@ -73,7 +74,7 @@ bool getTemperature() {
   float cr = dht.getComfortRatio(cf, newValues.temperature, newValues.humidity);
 
   String comfortStatus;
-  switch(cf) {
+  switch (cf) {
     case Comfort_OK:
       comfortStatus = "Comfort_OK";
       break;
@@ -112,15 +113,15 @@ bool getTemperature() {
 
 void setup()
 {
-   //WIFI Kit series V1 not support Vext control
+  //WIFI Kit series V1 not support Vext control
   Heltec.begin(false /*DisplayEnable Enable*/, true /*Heltec.LoRa Enable*/, true /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
   Serial.begin(115200);
   Serial.println("Greenhouse Project");
-  
+
   // initialize DHT11 and attach to dhtPin
   dht.setup(dhtPin, DHTesp::DHT11);
   Serial.println("DHT initiated");
-  
+
   LoRa.setSpreadingFactor(8);
 
   //buzzer
@@ -128,8 +129,8 @@ void setup()
 
   //pressure sensor
   if (!bmp.begin_I2C()) {   // hardware I2C mode, can pass in address & alt Wire
-  //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode  
-  //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
+    //if (! bmp.begin_SPI(BMP_CS)) {  // hardware SPI mode
+    //if (! bmp.begin_SPI(BMP_CS, BMP_SCK, BMP_MISO, BMP_MOSI)) {  // software SPI mode
     Serial.println("Could not find a valid BMP3 sensor, check wiring!");
     while (1);
   }
@@ -137,32 +138,40 @@ void setup()
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
   bmp.setOutputDataRate(BMP3_ODR_50_HZ);
-  
+
 
   //initialize soil sensor
   if (!ss.begin(0x36)) {
     Serial.println("ERROR! seesaw not found");
-    while(1) delay(1);
+    while (1) delay(1);
   } else {
     Serial.print("seesaw started! version: ");
     Serial.println(ss.getVersion(), HEX);
   }
+  // initialize servo
+  pinMode(servoRelayPin, OUTPUT);
+  digitalWrite(servoRelayPin, HIGH);
+  myServo.setPeriodHertz(50);
+  myServo.attach(servoPin, 1000, 2000);
 
+  //initialize solenoid
+  pinMode(solenoidPin, OUTPUT);
+  digitalWrite(solenoidPin, HIGH);
 }
 
 uint16_t capread;
 void loop()
 {
-   unsigned long currentMillis = millis();
+  unsigned long currentMillis = millis();
   if (currentMillis - previousMillis >= interval)
   {
     previousMillis = currentMillis;
-    
+
     //read sensors
     getTemperature();
     //float tempC = ss.getTemp();
-    
-    capread = ss.touchRead(0);    
+
+    capread = ss.touchRead(0);
 
     Serial.print("Temperature: "); Serial.println(newValues.temperature);
     Serial.print("Humidity: "); Serial.println(newValues.humidity);
@@ -181,8 +190,8 @@ void loop()
     double alt = bmp.readAltitude(SEALEVELPRESSURE_HPA);
     Serial.print(alt);
     Serial.println(" m");
-    
-//LoRa stuff 
+
+    //LoRa stuff
     char buffer[50];
     sprintf(buffer, "%g, %g, %d, %g, %g", newValues.temperature, newValues.humidity, capread, bmp.pressure, alt);
     sendMessage(buffer);
@@ -190,30 +199,41 @@ void loop()
 
   }
 
-  if(code == 0){
+  if (code == 0) {
     code = -1;
     //solenoid stuff goes here
-  } 
-  
-  if(code == 1){
+    digitalWrite(solenoidPin, LOW);
+  }
+
+  if (code == 1) {
     code = -1;
     //song stuff goes here
     play_a_song();
   }
-  
-  if(code == 2){
+
+  if (code == 2) {
     code = -1;
     //open window here
-  } 
-  
-  if(code == 3){
+    digitalWrite(relayPin, LOW);
+    myServo.attach(servoPin, 1000, 2000);
+    myServo.write(1800);
+    myServo.detach();
+    digitalWrite(relayPin, HIGH);
+  }
+
+  if (code == 3) {
     code = -1;
     //close window here
+    digitalWrite(relayPin, LOW);
+    myServo.attach(servoPin, 1000, 2000);
+    myServo.write(1200);
+    myServo.detach();
+    digitalWrite(relayPin, HIGH);
   }
 
   // parse for a packet, and call onReceive with the result:
   int temp = onReceive(LoRa.parsePacket());
-  if(temp != -1){
+  if (temp != -1) {
     code = temp;
   }
 }
@@ -248,7 +268,7 @@ int onReceive(int packetSize)
   }
 
   if (incomingLength != incoming.length())
-  {   // check length for error
+  { // check length for error
     Serial.println("error: message length does not match length");
     return -1;                             // skip rest of function
   }
@@ -271,21 +291,21 @@ int onReceive(int packetSize)
   return incoming.toInt();
 }
 
-void play_a_song(){
-    for (int thisNote = 0; thisNote < 8; thisNote++) {
+void play_a_song() {
+  for (int thisNote = 0; thisNote < 8; thisNote++) {
 
-        // to calculate the note duration, take one second divided by the note type.
-        //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-        int noteDuration = 1000 / noteDurations[thisNote];
-        ledcWriteNote(pwmChannel, melody[thisNote], octave[thisNote]);
-        delay(noteDuration);
-    
-        // to distinguish the notes, set a minimum time between them.
-        // the note's duration + 30% seems to work well:
-        int pauseBetweenNotes = noteDuration * 1.30;
-        delay(pauseBetweenNotes);
-        // stop the tone playing:
-        ledcWriteTone(pwmChannel, 0);
-        delay(15);
-    }
+    // to calculate the note duration, take one second divided by the note type.
+    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    int noteDuration = 1000 / noteDurations[thisNote];
+    ledcWriteNote(pwmChannel, melody[thisNote], octave[thisNote]);
+    delay(noteDuration);
+
+    // to distinguish the notes, set a minimum time between them.
+    // the note's duration + 30% seems to work well:
+    int pauseBetweenNotes = noteDuration * 1.30;
+    delay(pauseBetweenNotes);
+    // stop the tone playing:
+    ledcWriteTone(pwmChannel, 0);
+    delay(15);
+  }
 }
