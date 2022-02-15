@@ -1,3 +1,4 @@
+
 /**
  *
  * Web Server for IoT Greenhouse
@@ -206,7 +207,7 @@ content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
 
    content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
-    content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">The plants were watered!</button></a></p>");
+    content += ("<p><a href=\"/\"><button class=\"button buttonWater\">The plants were watered!</button></a></p>");
 
 
 //    content += "<form><label for=\"temp\">Enter new temp:</label><br><input type=\"text\" id=\"temp\" name=\"temp\"><br></form>";
@@ -411,7 +412,7 @@ void musicOn(){
 
 
 
-  content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Music is Playing!</button></a></p>");
+  content += ("<p><a href=\"/\"><button class=\"button buttonMusic\">Music is Playing!</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
@@ -544,8 +545,6 @@ void updateWeather() { //update weather from API
   if (client.connect(APIserver, 80)) {
     // Make a HTTP request:
     client.print("GET " + resource + "?");   // GET request
-    lastSendTime = millis();
-    interval = 180000;
 
     // List of name-value pair paramaters, separated by &
     client.print("lat=" + latitud);
@@ -890,7 +889,9 @@ void onReceive(int packetSize)
 
 
 String addGreenhouseData(){
+    updateWeather();
     String lines;
+    lines +=("<p1><br> Location: Terre Haute, Indiana</p1>");
     lines +=("<p2><br>Greenhouse Temperature: "); //print current Temp value
     lines += (String)myPlantData[0];
     lines += "*C </p2>";
