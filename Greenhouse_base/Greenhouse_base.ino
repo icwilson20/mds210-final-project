@@ -27,7 +27,7 @@
 int dhtPin = 10; //wired
 int buzzerPin = 23; //wired
 int servoPin = 4;
-int servoRelayPin = 12;
+int servoRelayPin = 2;
 int solenoidpin = 25;
 
 Servo myServo;
@@ -214,21 +214,21 @@ void loop()
   if (code == 2) {
     code = -1;
     //open window here
-    digitalWrite(relayPin, LOW);
+    digitalWrite(servoRelayPin, LOW);
     myServo.attach(servoPin, 1000, 2000);
     myServo.write(1800);
     myServo.detach();
-    digitalWrite(relayPin, HIGH);
+    digitalWrite(servoRelayPin, HIGH);
   }
 
   if (code == 3) {
     code = -1;
     //close window here
-    digitalWrite(relayPin, LOW);
+    digitalWrite(servoRelayPin, LOW);
     myServo.attach(servoPin, 1000, 2000);
     myServo.write(1200);
     myServo.detach();
-    digitalWrite(relayPin, HIGH);
+    digitalWrite(servoRelayPin, HIGH);
   }
 
   // parse for a packet, and call onReceive with the result:
