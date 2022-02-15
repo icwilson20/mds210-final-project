@@ -150,13 +150,15 @@ void setup()
   }
   // initialize servo
   pinMode(servoRelayPin, OUTPUT);
-  digitalWrite(servoRelayPin, HIGH);
+  digitalWrite(servoRelayPin, LOW);
   myServo.setPeriodHertz(50);
   myServo.attach(servoPin, 1000, 2000);
+  myServo.write(1200);
+  myServo.detach();
 
   //initialize solenoid
   pinMode(solenoidPin, OUTPUT);
-  digitalWrite(solenoidPin, HIGH);
+  digitalWrite(solenoidPin, LOW);
 }
 
 uint16_t capread;
@@ -202,6 +204,8 @@ void loop()
   if (code == 0) {
     code = -1;
     //solenoid stuff goes here
+    digitalWrite(solenoidPin, HIGH);
+    delay(1500);
     digitalWrite(solenoidPin, LOW);
   }
 
@@ -214,21 +218,21 @@ void loop()
   if (code == 2) {
     code = -1;
     //open window here
-    digitalWrite(servoRelayPin, LOW);
+    digitalWrite(servoRelayPin, HIGH);
     myServo.attach(servoPin, 1000, 2000);
     myServo.write(1800);
     myServo.detach();
-    digitalWrite(servoRelayPin, HIGH);
+    digitalWrite(servoRelayPin, LOW);
   }
 
   if (code == 3) {
     code = -1;
     //close window here
-    digitalWrite(servoRelayPin, LOW);
+    digitalWrite(servoRelayPin, HIGH);
     myServo.attach(servoPin, 1000, 2000);
     myServo.write(1200);
     myServo.detach();
-    digitalWrite(servoRelayPin, HIGH);
+    digitalWrite(servoRelayPin, LOW);
   }
 
   // parse for a packet, and call onReceive with the result:
