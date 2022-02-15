@@ -617,9 +617,7 @@ void setup() {
 } //end setup
 
 void loop() {
-  if(millis() - lastSendTime > interval){
-      updateWeather();
-  }
+
 
   if(waterOn){
     waterOn = false;
