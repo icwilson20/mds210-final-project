@@ -6,6 +6,9 @@
 #include "Adafruit_seesaw.h"
 #include "pitches.h"
 #include "numberOne.h"
+#include <ESP32Servo.h>
+#include <ESP32Tone.h>
+#include <ESP32PWM.h>
 
 #include <Wire.h>
 #include <SPI.h>
@@ -28,7 +31,9 @@ int dhtPin = 10; //wired
 int buzzerPin = 23; //wired
 int servoPin = 4;
 int servoRelayPin = 2;
-int solenoidpin = 25;
+int solenoidPin = 25;
+
+const int pwmChannel = 0;
 
 Servo myServo;
 
