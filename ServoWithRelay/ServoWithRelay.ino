@@ -18,7 +18,7 @@ void setup() {
   myServo.setPeriodHertz(50);
   myServo.attach(servoPin, 1000, 2000);
   digitalWrite(relayPin, LOW);
-  myServo.write(1500);
+  myServo.write(1500);  
   Serial.println("first delay");
   delay(1000);
   myServo.write(1200);
@@ -36,7 +36,7 @@ void loop() {
   delay(1000);
   digitalWrite(relayPin, LOW);
   myServo.attach(servoPin, 1000, 2000);
-  myServo.write(1800);
+  myServo.write(1950);
   delay(1000);
   
   Serial.println("middle of the loop");
@@ -45,6 +45,6 @@ void loop() {
   delay(1000);
   digitalWrite(relayPin, LOW);
   myServo.attach(servoPin, 1000, 2000);
-  myServo.write(1200);
+  myServo.write(1000);
   delay(1000);
 }
