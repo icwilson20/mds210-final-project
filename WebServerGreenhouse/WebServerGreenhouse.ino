@@ -1,4 +1,3 @@
-
 /**
  *
  * Web Server for IoT Greenhouse
@@ -26,11 +25,11 @@ String outgoing;              // outgoing message
 
 byte localAddress = 0xAB;     // address of this device
 byte destination = 0xBC;      // destination to send to
-  String myPlantData[5];    //data received from device
+String myPlantData[5];        //data received from device
 
 byte msgCount = 0;            // count of outgoing messages
 long lastSendTime = 0;        // last send time
-int interval = 180000;          // interval between sends
+int interval = 180000;        // interval between sends
 
 bool waterOn = false;
 String water_plants = "0";
@@ -41,12 +40,9 @@ String open_window = "2";
 bool closeWindow = false;
 String close_window = "3";
 
-DHTesp dht;
-
 // Network credentials
 const char* ssid = "RHIT-OPEN";
 const char* pass = "";
-const char* userTemp = "temp";
 String apiKey = "0d395ca59e5a4bd97ddaab6bb601594f";
 
 // resource and parameter values for GET request
@@ -63,13 +59,12 @@ int APIPressure;
 char APIserver[] = "api.openweathermap.org";
 
 WiFiClient client;
+WebServer server(80);
 double APITemperature;
 int APIHumidity;
 String content;
 
 // Set web server port number to 80
-//WiFiServer server(80);
-WebServer server(80);
 String header;
 // Current time
 unsigned long currentTime = millis();
@@ -79,30 +74,7 @@ unsigned long previousTime = 0;
 const long timeoutTime = 2000;
 int humidity;
 
-/** Comfort profile */
-ComfortState cf;
-/** Pin number for DHT11 data pin */
-int dhtPin = 10;
-const int ledPin = LED_BUILTIN;
-int ledState = LOW; // LED initially off
-int fan = 27;
-int fanState = HIGH; //fan initially off
-int hotTemp = 25; // initial temperature threshold
 bool musicPlaying = false;
-
-int getTemperature() {
-  // Reading temperature for humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (it's a very slow sensor)
-  TempAndHumidity newValues = dht.getTempAndHumidity();
-  // Check if any reads failed and exit early (to try again).
-  if (dht.getStatus() != 0) {
-    Serial.println("DHT11 error status: " + String(dht.getStatusString()));
-    return false;
-  }
-  humidity = newValues.humidity;
-  return newValues.temperature;
-} // end getTemperature
-
 
 //Check if header is present and correct
 bool is_authentified() {
@@ -121,6 +93,7 @@ bool is_authentified() {
 } // end is_authentified
 
 void wateringPlants(){
+  updateWeather();
   Serial.println("Enter wateringPlants");
   waterOn = true;
 
@@ -133,7 +106,7 @@ void wateringPlants(){
   } else {
     String content ="<!DOCTYPE html><html>";
     content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-    content += "<meta http-equiv=\"refresh\" content=\"30\">";
+    //content += "<meta http-equiv=\"refresh\" content=\"30\">";
     content +=("<link rel=\"icon\" href=\"data:,\">");
     content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
     // CSS to style the on/off buttons 
@@ -155,17 +128,6 @@ void wateringPlants(){
 //      content +=("<i class=\"fas fa-temperature-low\"></i>");
 //    }
 
-content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
-    content += ("<i class=\"fas fa-sun\"></i>");
-    content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
-    content += ("<i class=\"fas fa-rainbow\"></i>");
-    content += ("<i class=\"fas fa-leaf\"></i>"); //leaf
-    content += ("<i class=\"fab fa-pagelines\"></i>"); //leaf
-    content += ("<i class=\"fas fa-seedling\"></i>");
-    content += ("<i class=\"fas fa-wind\"></i>");
-    content += ("<i class=\"fas fa-tree\"></i>");
-    content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
     content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
@@ -187,32 +149,37 @@ content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-
     
-    
+    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+    content += ("<i class=\"fas fa-sun\"></i>");
+    content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
+    content += ("<i class=\"fas fa-rainbow\"></i>");
+    content += ("<i class=\"fas fa-leaf\"></i>"); //leaf
+    content += ("<i class=\"fab fa-pagelines\"></i>"); //leaf
+    content += ("<i class=\"fas fa-seedling\"></i>");
+    content += ("<i class=\"fas fa-wind\"></i>");
+    content += ("<i class=\"fas fa-tree\"></i>");
+    content += ("<i class=\"fas fa-cloud-sun\"></i>");
+  
     content +=("<p1><br>   </p1>");
-
     content += addGreenhouseData();
 
-    content +=("<p5><br>Current Outside Temperature: </p6>");
+    content +=("<p5><br>Current Outside Temperature: ");
     content +=(APITemperature);
+    content += "*C </p6>";
 
-    content +=("<p6><br>Current Outside Humidity: </p7>");
+    content +=("<p6><br>Current Outside Humidity: ");
     content +=(APIHumidity);
+    content +=("%</p7>");
 
     content += ("<p7><br>Current Outside Pressure: </p8>");
     content += (APIPressure);
 
-
-
-   content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
+    content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
     content += ("<p><a href=\"/\"><button class=\"button buttonWater\">The plants were watered!</button></a></p>");
 
-
-//    content += "<form><label for=\"temp\">Enter new temp:</label><br><input type=\"text\" id=\"temp\" name=\"temp\"><br></form>";
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-
                     
     server.send(200, "text/html", content); //display everything
 
@@ -221,6 +188,7 @@ content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
 } // end wateringPlants
 
 void windowOpen(){
+  updateWeather();
   Serial.println("Enter windowOpen");
   openWindow = true;
 
@@ -245,16 +213,9 @@ void windowOpen(){
     content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
     content +=(".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
     content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
-              
-              
+                          
     // Web Page Heading
     content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
-//    if(APITemperature > getTemperature()){
-//      content +=("<i class=\"fas fa-temperature-high\"></i>");
-//    } else {
-//      content +=("<i class=\"fas fa-temperature-low\"></i>");
-//    }
-
 
     content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
@@ -288,35 +249,26 @@ void windowOpen(){
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-
     
     content +=("<p1><br>   </p1>");
-
     content +=addGreenhouseData();
 
-
-
-    content +=("<p5><br>Current Outside Temperature: </p5>");
+    content +=("<p5><br>Current Outside Temperature: ");
     content +=(APITemperature);
+    content += "*C </p5>";
 
-    content +=("<p6><br>Current Outside Humidity: </p6>");
+    content +=("<p6><br>Current Outside Humidity: ");
     content +=(APIHumidity);
+    content +=("%</p6>");
 
     content += ("<p7><br>Current Outside Pressure: </p7>");
     content += (APIPressure);
-
-
-
-    
+ 
     content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/\"><button class=\"button buttonWindow\">Close the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
-
-
-//    content += "<form><label for=\"temp\">Enter new temp:</label><br><input type=\"text\" id=\"temp\" name=\"temp\"><br></form>";
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-
                     
     server.send(200, "text/html", content); //display everything
 
@@ -326,6 +278,7 @@ void windowOpen(){
 
 
 void musicOn(){
+    updateWeather();
     Serial.println("Enter musicOn");
     turnOnMusic = true;
 
@@ -353,13 +306,7 @@ void musicOn(){
               
               
     // Web Page Heading
-    content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
-//    if(APITemperature > getTemperature()){
-//      content +=("<i class=\"fas fa-temperature-high\"></i>");
-//    } else {
-//      content +=("<i class=\"fas fa-temperature-low\"></i>");
-//    }
-
+      content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
 
       content += ("<i class=\"fas fa-music\"></i>"); //music note
       content += ("<i class=\"fas fa-volume-up\"></i>");
@@ -395,31 +342,24 @@ void musicOn(){
 
     
     content +=("<p1><br>   </p1>");
-
     content += addGreenhouseData();
 
-
-
-    content +=("<p5><br>Current Outside Temperature: </p5>");
+    content +=("<p5><br>Current Outside Temperature: ");
     content +=(APITemperature);
+    content += "*C </p5>";
 
-    content +=("<p6><br>Current Outside Humidity: </p6>");
+    content +=("<p6><br>Current Outside Humidity: ");
     content +=(APIHumidity);
+    content +=("%</p6>");
 
     content += ("<p7><br>Current Outside Pressure: </p7>");
     content += (APIPressure);
  
-
-
-
-  content += ("<p><a href=\"/\"><button class=\"button buttonMusic\">Music is Playing!</button></a></p>");
+    content += ("<p><a href=\"/\"><button class=\"button buttonMusic\">Music is Playing!</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
-
-//    content += "<form><label for=\"temp\">Enter new temp:</label><br><input type=\"text\" id=\"temp\" name=\"temp\"><br></form>";
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-
                     
     server.send(200, "text/html", content); //display everything
 
@@ -428,10 +368,8 @@ void musicOn(){
 } // end musicOn
 
 
-
-
-
 void handleRoot() { //webpage for authorized users
+  updateWeather();
   Serial.println("Enter handleRoot");
   waterOn = false;
   turnOnMusic = false;
@@ -463,12 +401,6 @@ void handleRoot() { //webpage for authorized users
               
     // Web Page Heading
     content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
-//    if(APITemperature > getTemperature()){
-//      content +=("<i class=\"fas fa-temperature-high\"></i>");
-//    } else {
-//      content +=("<i class=\"fas fa-temperature-low\"></i>");
-//    }
-
 
     content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
@@ -502,42 +434,32 @@ void handleRoot() { //webpage for authorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-
     
     content +=("<p1><br>   </p1>");
-
     content += addGreenhouseData();
 
-
-
-    content +=("<p5><br>Current Outside Temperature: </p5>");
+    content +=("<p5><br>Current Outside Temperature: ");
     content +=(APITemperature);
+    content += "*C </p5>";
 
     content +=("<p6><br>Current Outside Humidity: </p6>");
     content +=(APIHumidity);
+    content +=("%</p6>");
 
     content += ("<p7><br>Current Outside Pressure: </p7>");
     content += (APIPressure);
-
-
-    
 
     content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
-
-
-//    content += "<form><label for=\"temp\">Enter new temp:</label><br><input type=\"text\" id=\"temp\" name=\"temp\"><br></form>";
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-
-                    
+                  
     server.send(200, "text/html", content); //display everything
 
 }
   
 } // end handleRoot
-
 
 
 void updateWeather() { //update weather from API
@@ -572,7 +494,6 @@ void updateWeather() { //update weather from API
     APIPressure = myObject["current"]["pressure"];
   }
 } //end updateWeater
-
 
 
 void setup() {
@@ -617,9 +538,6 @@ void setup() {
 } //end setup
 
 void loop() {
-  if(millis() - lastSendTime > interval){
-      updateWeather();
-  }
 
   if(waterOn){
     waterOn = false;
@@ -655,6 +573,7 @@ void loop() {
 
 
 void handleLogin() { //webpage for unauthorized users
+  updateWeather();
   turnOnMusic = false;
   waterOn = false;
   openWindow = false;
@@ -690,8 +609,8 @@ void handleLogin() { //webpage for unauthorized users
     // Display the HTML web page
     String content ="<!DOCTYPE html><html>";
 
-       content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-       content += "<meta http-equiv=\"refresh\" content=\"30\">";
+    content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+    content += "<meta http-equiv=\"refresh\" content=\"30\">";
     content +=("<link rel=\"icon\" href=\"data:,\">");
     content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
     // CSS to style the on/off buttons 
@@ -707,11 +626,6 @@ void handleLogin() { //webpage for unauthorized users
               
     // Web Page Heading
     content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
-//    if(APITemperature > getTemperature()){
-//      content +=("<i class=\"fas fa-temperature-high\"></i>");
-//    } else {
-//      content +=("<i class=\"fas fa-temperature-low\"></i>");
-//    }
 
     if(musicPlaying == true){
       content += ("<i class=\"fas fa-music\"></i>"); //music note
@@ -782,20 +696,17 @@ void handleLogin() { //webpage for unauthorized users
     } //end icon prints
     
     content +=("<p1><br>   </p1>");
-
     content +=addGreenhouseData();
 
-
-
-    content +=("<p5><br>Current Outside Temperature: </p5>");
-    content +=(APITemperature);
+    content +=("<p5><br>Current Outside Temperature: ");
+    content +=(APITemperature);   
+    content += "*C </p5>";
 
     content +=("<p6><br>Current Outside Humidity: </p6>");
     content +=(APIHumidity);
 
     content += ("<p7><br>Current Outside Pressure: </p7>");
     content += (APIPressure);
-
   
     content += "<form action='/login' method='POST'>Please log in to access Temperature Control<br>";
     content += "User:<input type='text' name='USERNAME' placeholder='user name'><br>";
@@ -805,12 +716,8 @@ void handleLogin() { //webpage for unauthorized users
     content +=("</body></html>");
 
     server.send(200, "text/html", content);
-
     
-        } //end handleLogin
-
-
-
+} //end handleLogin
 
 
 void sendMessage(String outgoing)
@@ -889,7 +796,6 @@ void onReceive(int packetSize)
 
 
 String addGreenhouseData(){
-    updateWeather();
     String lines;
     lines +=("<p1><br> Location: Terre Haute, Indiana</p1>");
     lines +=("<p2><br>Greenhouse Temperature: "); //print current Temp value
