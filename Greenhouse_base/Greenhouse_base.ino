@@ -9,6 +9,7 @@
 #include <ESP32Servo.h>
 #include <ESP32Tone.h>
 #include <ESP32PWM.h>
+#include <analogWrite.h>
 
 #include <Wire.h>
 #include <SPI.h>
@@ -33,7 +34,7 @@ int servoPin = 4;
 int servoRelayPin = 2;
 int solenoidPin = 25;
 
-const int pwmChannel = 0;
+const int pwmChannel = 1;
 
 Servo myServo;
 
@@ -223,21 +224,23 @@ void loop()
   if (code == 2) {
     code = -1;
     //open window here
-    digitalWrite(servoRelayPin, HIGH);
+  //  digitalWrite(servoRelayPin, HIGH);
     myServo.attach(servoPin, 1000, 2000);
-    myServo.write(1800);
+    myServo.write(1950);
+    delay(1000); 
     myServo.detach();
-    digitalWrite(servoRelayPin, LOW);
+   // digitalWrite(servoRelayPin, LOW);
   }
 
   if (code == 3) {
     code = -1;
     //close window here
-    digitalWrite(servoRelayPin, HIGH);
+   // digitalWrite(servoRelayPin, HIGH);
     myServo.attach(servoPin, 1000, 2000);
-    myServo.write(1200);
+    myServo.write(1000);
+    delay(1000);
     myServo.detach();
-    digitalWrite(servoRelayPin, LOW);
+  //  digitalWrite(servoRelayPin, LOW);
   }
 
   // parse for a packet, and call onReceive with the result:
