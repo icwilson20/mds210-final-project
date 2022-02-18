@@ -40,10 +40,12 @@ String open_window = "2";
 bool closeWindow = false;
 String close_window = "3";
 
+bool firsttime = false; //prevents re-watering on autorefresh
+
 // Network credentials
 const char* ssid = "RHIT-OPEN";
 const char* pass = "";
-String apiKey = "0d395ca59e5a4bd97ddaab6bb601594f";
+String apiKey = "1dcfeeff987af811a8fd66a0b79c81bb";
 
 // resource and parameter values for GET request
 String resource = "/data/2.5/onecall";  // One Call API
@@ -72,6 +74,9 @@ unsigned long currentTime = millis();
 unsigned long previousTime = 0; 
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
+const long oneminute = 60000;
+int numminutes = 0;
+int previousAPImillis = 0;
 int humidity;
 
 bool musicPlaying = false;
@@ -93,9 +98,14 @@ bool is_authentified() {
 } // end is_authentified
 
 void wateringPlants(){
-  updateWeather();
+  //updateWeather();
   Serial.println("Enter wateringPlants");
-  waterOn = true;
+  if(firsttime){
+    firsttime = false;
+    waterOn = true;
+  } else {
+    waterOn = false;
+  }
 
   String header;
   if (!is_authentified()) {
@@ -172,8 +182,9 @@ void wateringPlants(){
     content +=(APIHumidity);
     content +=("%</p7>");
 
-    content += ("<p7><br>Current Outside Pressure: </p8>");
+    content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
+    content += " hPa</p8>";
 
     content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
@@ -188,7 +199,7 @@ void wateringPlants(){
 } // end wateringPlants
 
 void windowOpen(){
-  updateWeather();
+  //updateWeather();
   Serial.println("Enter windowOpen");
   openWindow = true;
 
@@ -261,8 +272,9 @@ void windowOpen(){
     content +=(APIHumidity);
     content +=("%</p6>");
 
-    content += ("<p7><br>Current Outside Pressure: </p7>");
+    content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
+    content += " hPa</p8>";
  
     content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/\"><button class=\"button buttonWindow\">Close the Window</button></a></p>");
@@ -278,9 +290,10 @@ void windowOpen(){
 
 
 void musicOn(){
-    updateWeather();
+    //updateWeather();
     Serial.println("Enter musicOn");
     turnOnMusic = true;
+    firsttime = true;
 
   String header;
   if (!is_authentified()) {
@@ -352,10 +365,11 @@ void musicOn(){
     content +=(APIHumidity);
     content +=("%</p6>");
 
-    content += ("<p7><br>Current Outside Pressure: </p7>");
+    content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
+    content += " hPa</p8>";
  
-    content += ("<p><a href=\"/\"><button class=\"button buttonMusic\">Music is Playing!</button></a></p>");
+    content += ("<p><a href=\"/\"><button class=\"button buttonMusic\">Stop Playing Music</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
@@ -369,12 +383,13 @@ void musicOn(){
 
 
 void handleRoot() { //webpage for authorized users
-  updateWeather();
+  //updateWeather();
   Serial.println("Enter handleRoot");
   waterOn = false;
   turnOnMusic = false;
   openWindow = false;
   closeWindow = true;
+  firsttime = true;
 
   String header;
   if (!is_authentified()) {
@@ -446,8 +461,9 @@ void handleRoot() { //webpage for authorized users
     content +=(APIHumidity);
     content +=("%</p6>");
 
-    content += ("<p7><br>Current Outside Pressure: </p7>");
+    content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
+    content += " hPa</p8>";
 
     content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
@@ -499,7 +515,6 @@ void updateWeather() { //update weather from API
 void setup() {
 
   Serial.begin(115200);
-  updateWeather();
 
   Heltec.begin(false /*Display Enable*/, true /*LoRa Enable*/, true /*Serial Enable*/,true /*PABOOST Enable*/, BAND /*long BAND*/); 
   Serial.println("Heltec.LoRa Duplex");
@@ -520,6 +535,8 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   delay(1000);
+
+  updateWeather();
   
   server.on("/", handleRoot);
   server.on("/login", handleLogin);
@@ -564,6 +581,15 @@ void loop() {
     Serial.println("Sending " + message);
   }
 
+  if(currentTime - previousAPImillis >= oneminute){
+    previousAPImillis = currentTime;
+    numminutes++;
+    if(numminutes == 60){
+      numminutes = 0;
+      updateWeather();
+    }
+  }
+
    onReceive(LoRa.parsePacket());
 
   server.handleClient();
@@ -573,7 +599,7 @@ void loop() {
 
 
 void handleLogin() { //webpage for unauthorized users
-  updateWeather();
+  //updateWeather();
   turnOnMusic = false;
   waterOn = false;
   openWindow = false;
@@ -702,11 +728,13 @@ void handleLogin() { //webpage for unauthorized users
     content +=(APITemperature);   
     content += "*C </p5>";
 
-    content +=("<p6><br>Current Outside Humidity: </p6>");
+    content +=("<p6><br>Current Outside Humidity: ");
     content +=(APIHumidity);
+    content += "%</p6>";
 
-    content += ("<p7><br>Current Outside Pressure: </p7>");
+    content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
+    content += " hPa</p8>";
   
     content += "<form action='/login' method='POST'>Please log in to access Temperature Control<br>";
     content += "User:<input type='text' name='USERNAME' placeholder='user name'><br>";
