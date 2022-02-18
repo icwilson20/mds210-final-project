@@ -43,7 +43,7 @@ String close_window = "3";
 // Network credentials
 const char* ssid = "RHIT-OPEN";
 const char* pass = "";
-String apiKey = "0d395ca59e5a4bd97ddaab6bb601594f";
+String apiKey = "a00d9bf5a7b27f1e160a05076b97d1f9";
 
 // resource and parameter values for GET request
 String resource = "/data/2.5/onecall";  // One Call API

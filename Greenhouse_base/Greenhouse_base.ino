@@ -180,6 +180,11 @@ void loop()
     //float tempC = ss.getTemp();
 
     capread = ss.touchRead(0);
+    if(capread < 400){
+      digitalWrite(solenoidPin, HIGH);
+      delay(500);
+      digitalWrite(solenoidPin, LOW);
+    }
 
     Serial.print("Temperature: "); Serial.println(newValues.temperature);
     Serial.print("Humidity: "); Serial.println(newValues.humidity);
@@ -211,7 +216,7 @@ void loop()
     code = -1;
     //solenoid stuff goes here
     digitalWrite(solenoidPin, HIGH);
-    delay(1500);
+    delay(2500);
     digitalWrite(solenoidPin, LOW);
   }
 
