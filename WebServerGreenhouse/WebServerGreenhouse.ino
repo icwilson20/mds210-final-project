@@ -1,12 +1,12 @@
 /**
- *
- * Web Server for IoT Greenhouse
- * Author: Magnolia Maurer
- * Date: 2/1/2022
- * Description: 
- * Last-revised: 
- *
- */
+
+   Web Server for IoT Greenhouse
+   Author: Magnolia Maurer
+   Date: 2/1/2022
+   Description:
+   Last-revised:
+
+*/
 
 #include "DHTesp.h" // Click here to get the library: http://librarymanager/All#DHTesp
 #include <Arduino.h>
@@ -18,6 +18,8 @@
 #include <WebServer.h>
 #include <stdio.h>
 #include <string.h>
+#include "arduino_secrets.h"
+
 
 #define BAND    915E6  //you can set band here directly,e.g. 868E6,915E6
 
@@ -43,9 +45,10 @@ String close_window = "3";
 bool firsttime = false; //prevents re-watering on autorefresh
 
 // Network credentials
-const char* ssid = "RHIT-OPEN";
-const char* pass = "";
-String apiKey = "1dcfeeff987af811a8fd66a0b79c81bb";
+char ssid[] = SECRET_SSID;  //  your network NAME
+char pass[] = SECRET_PASS;  //  your network PASSWORD
+
+String apiKey = SECRET_APIKEY; // open weather map API KEY
 
 // resource and parameter values for GET request
 String resource = "/data/2.5/onecall";  // One Call API
@@ -71,7 +74,7 @@ String header;
 // Current time
 unsigned long currentTime = millis();
 // Previous time
-unsigned long previousTime = 0; 
+unsigned long previousTime = 0;
 // Define timeout time in milliseconds (example: 2000ms = 2s)
 const long timeoutTime = 2000;
 const long oneminute = 60000;
@@ -97,10 +100,10 @@ bool is_authentified() {
   return false;
 } // end is_authentified
 
-void wateringPlants(){
+void wateringPlants() {
   //updateWeather();
   Serial.println("Enter wateringPlants");
-  if(firsttime){
+  if (firsttime) {
     firsttime = false;
     waterOn = true;
   } else {
@@ -114,31 +117,31 @@ void wateringPlants(){
     server.send(301);
     return;
   } else {
-    String content ="<!DOCTYPE html><html>";
-    content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+    String content = "<!DOCTYPE html><html>";
+    content += ("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
     //content += "<meta http-equiv=\"refresh\" content=\"30\">";
-    content +=("<link rel=\"icon\" href=\"data:,\">");
-    content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
-    // CSS to style the on/off buttons 
+    content += ("<link rel=\"icon\" href=\"data:,\">");
+    content += ("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
+    // CSS to style the on/off buttons
     // Feel free to change the background-color and font-size attributes to fit your preferences
-    content +=("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
-    content +=(".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
-              
-              
-    // Web Page Heading
-    content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
-//    if(APITemperature > getTemperature()){
-//      content +=("<i class=\"fas fa-temperature-high\"></i>");
-//    } else {
-//      content +=("<i class=\"fas fa-temperature-low\"></i>");
-//    }
+    content += ("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
+    content += (".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
 
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    // Web Page Heading
+    content += ("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+    //    if(APITemperature > getTemperature()){
+    //      content +=("<i class=\"fas fa-temperature-high\"></i>");
+    //    } else {
+    //      content +=("<i class=\"fas fa-temperature-low\"></i>");
+    //    }
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -148,8 +151,8 @@ void wateringPlants(){
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -159,8 +162,8 @@ void wateringPlants(){
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -170,17 +173,17 @@ void wateringPlants(){
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-  
-    content +=("<p1><br>   </p1>");
+
+    content += ("<p1><br>   </p1>");
     content += addGreenhouseData();
 
-    content +=("<p5><br>Current Outside Temperature: ");
-    content +=(APITemperature);
+    content += ("<p5><br>Current Outside Temperature: ");
+    content += (APITemperature);
     content += "*C </p6>";
 
-    content +=("<p6><br>Current Outside Humidity: ");
-    content +=(APIHumidity);
-    content +=("%</p7>");
+    content += ("<p6><br>Current Outside Humidity: ");
+    content += (APIHumidity);
+    content += ("%</p7>");
 
     content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
@@ -191,14 +194,14 @@ void wateringPlants(){
     content += ("<p><a href=\"/\"><button class=\"button buttonWater\">The plants were watered!</button></a></p>");
 
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-                    
+
     server.send(200, "text/html", content); //display everything
 
-}
-  
+  }
+
 } // end wateringPlants
 
-void windowOpen(){
+void windowOpen() {
   //updateWeather();
   Serial.println("Enter windowOpen");
   openWindow = true;
@@ -210,25 +213,25 @@ void windowOpen(){
     server.send(301);
     return;
   } else {
-    String content ="<!DOCTYPE html><html>";
-    content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+    String content = "<!DOCTYPE html><html>";
+    content += ("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
     content += "<meta http-equiv=\"refresh\" content=\"30\">";
-    content +=("<link rel=\"icon\" href=\"data:,\">");
-    content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
-    // CSS to style the on/off buttons 
+    content += ("<link rel=\"icon\" href=\"data:,\">");
+    content += ("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
+    // CSS to style the on/off buttons
     // Feel free to change the background-color and font-size attributes to fit your preferences
-    content +=("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
-    content +=(".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
-                          
+    content += ("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
+    content += (".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
+
     // Web Page Heading
-    content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+    content += ("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
 
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -238,62 +241,62 @@ void windowOpen(){
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
-    content += ("<i class=\"fas fa-sun\"></i>");
-    content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
-    content += ("<i class=\"fas fa-rainbow\"></i>");
-    content += ("<i class=\"fas fa-leaf\"></i>"); //leaf
-    content += ("<i class=\"fab fa-pagelines\"></i>"); //leaf
-    content += ("<i class=\"fas fa-seedling\"></i>");
-    content += ("<i class=\"fas fa-wind\"></i>");
-    content += ("<i class=\"fas fa-tree\"></i>");
-    content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
-    content += ("<i class=\"fas fa-sun\"></i>");
-    content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
-    content += ("<i class=\"fas fa-rainbow\"></i>");
-    content += ("<i class=\"fas fa-leaf\"></i>"); //leaf
-    content += ("<i class=\"fab fa-pagelines\"></i>"); //leaf
-    content += ("<i class=\"fas fa-seedling\"></i>");
-    content += ("<i class=\"fas fa-wind\"></i>");
-    content += ("<i class=\"fas fa-tree\"></i>");
-    content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<p1><br>   </p1>");
-    content +=addGreenhouseData();
 
-    content +=("<p5><br>Current Outside Temperature: ");
-    content +=(APITemperature);
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+    content += ("<i class=\"fas fa-sun\"></i>");
+    content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
+    content += ("<i class=\"fas fa-rainbow\"></i>");
+    content += ("<i class=\"fas fa-leaf\"></i>"); //leaf
+    content += ("<i class=\"fab fa-pagelines\"></i>"); //leaf
+    content += ("<i class=\"fas fa-seedling\"></i>");
+    content += ("<i class=\"fas fa-wind\"></i>");
+    content += ("<i class=\"fas fa-tree\"></i>");
+    content += ("<i class=\"fas fa-cloud-sun\"></i>");
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+    content += ("<i class=\"fas fa-sun\"></i>");
+    content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
+    content += ("<i class=\"fas fa-rainbow\"></i>");
+    content += ("<i class=\"fas fa-leaf\"></i>"); //leaf
+    content += ("<i class=\"fab fa-pagelines\"></i>"); //leaf
+    content += ("<i class=\"fas fa-seedling\"></i>");
+    content += ("<i class=\"fas fa-wind\"></i>");
+    content += ("<i class=\"fas fa-tree\"></i>");
+    content += ("<i class=\"fas fa-cloud-sun\"></i>");
+
+    content += ("<p1><br>   </p1>");
+    content += addGreenhouseData();
+
+    content += ("<p5><br>Current Outside Temperature: ");
+    content += (APITemperature);
     content += "*C </p5>";
 
-    content +=("<p6><br>Current Outside Humidity: ");
-    content +=(APIHumidity);
-    content +=("%</p6>");
+    content += ("<p6><br>Current Outside Humidity: ");
+    content += (APIHumidity);
+    content += ("%</p6>");
 
     content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
     content += " hPa</p8>";
- 
+
     content += ("<p><a href=\"/music/on\"><button class=\"button buttonMusic\">Sing to the Plants</button></a></p>");
     content += ("<p><a href=\"/\"><button class=\"button buttonWindow\">Close the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-                    
+
     server.send(200, "text/html", content); //display everything
 
-}
-  
+  }
+
 } // end windowOpen
 
 
-void musicOn(){
-    //updateWeather();
-    Serial.println("Enter musicOn");
-    turnOnMusic = true;
-    firsttime = true;
+void musicOn() {
+  //updateWeather();
+  Serial.println("Enter musicOn");
+  turnOnMusic = true;
+  firsttime = true;
 
   String header;
   if (!is_authentified()) {
@@ -302,83 +305,83 @@ void musicOn(){
     server.send(301);
     return;
   } else {
-    String content ="<!DOCTYPE html><html>";
-    content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+    String content = "<!DOCTYPE html><html>";
+    content += ("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
     content += "<meta http-equiv=\"refresh\" content=\"30\">";
-    content +=("<link rel=\"icon\" href=\"data:,\">");
-    content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
-    // CSS to style the on/off buttons 
+    content += ("<link rel=\"icon\" href=\"data:,\">");
+    content += ("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
+    // CSS to style the on/off buttons
     // Feel free to change the background-color and font-size attributes to fit your preferences
-    content +=("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
-    content +=(".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
-              
-              
+    content += ("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
+    content += (".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
+
+
     // Web Page Heading
-      content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+    content += ("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
 
-      content += ("<i class=\"fas fa-music\"></i>"); //music note
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-      
-      content += ("<i class=\"fas fa-music\"></i>"); //repeat
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-      
-      content += ("<i class=\"fas fa-music\"></i>"); //repeat
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-      
-      content += ("<i class=\"fas fa-music\"></i>"); //repeat
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
+    content += ("<i class=\"fas fa-music\"></i>"); //music note
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
 
-    
-    content +=("<p1><br>   </p1>");
+    content += ("<i class=\"fas fa-music\"></i>"); //repeat
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+    content += ("<i class=\"fas fa-music\"></i>"); //repeat
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+    content += ("<i class=\"fas fa-music\"></i>"); //repeat
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+
+    content += ("<p1><br>   </p1>");
     content += addGreenhouseData();
 
-    content +=("<p5><br>Current Outside Temperature: ");
-    content +=(APITemperature);
+    content += ("<p5><br>Current Outside Temperature: ");
+    content += (APITemperature);
     content += "*C </p5>";
 
-    content +=("<p6><br>Current Outside Humidity: ");
-    content +=(APIHumidity);
-    content +=("%</p6>");
+    content += ("<p6><br>Current Outside Humidity: ");
+    content += (APIHumidity);
+    content += ("%</p6>");
 
     content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
     content += " hPa</p8>";
- 
+
     content += ("<p><a href=\"/\"><button class=\"button buttonMusic\">Stop Playing Music</button></a></p>");
     content += ("<p><a href=\"/window/open\"><button class=\"button buttonWindow\">Open the Window</button></a></p>");
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-                    
+
     server.send(200, "text/html", content); //display everything
 
-}
-  
+  }
+
 } // end musicOn
 
 
@@ -398,26 +401,26 @@ void handleRoot() { //webpage for authorized users
     server.send(301);
     return;
   } else {
-    String content ="<!DOCTYPE html><html>";
-    content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+    String content = "<!DOCTYPE html><html>";
+    content += ("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
     content += "<meta http-equiv=\"refresh\" content=\"30\">";
-    content +=("<link rel=\"icon\" href=\"data:,\">");
-    content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
-    // CSS to style the on/off buttons 
+    content += ("<link rel=\"icon\" href=\"data:,\">");
+    content += ("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
+    // CSS to style the on/off buttons
     // Feel free to change the background-color and font-size attributes to fit your preferences
-    content +=("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
-    content +=(".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
-              
-              
-    // Web Page Heading
-    content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+    content += ("<style>html { font-family: Arial fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
+    content += (".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+    content += (".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
+    content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
 
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    // Web Page Heading
+    content += ("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -427,8 +430,8 @@ void handleRoot() { //webpage for authorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -438,8 +441,8 @@ void handleRoot() { //webpage for authorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -449,17 +452,17 @@ void handleRoot() { //webpage for authorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<p1><br>   </p1>");
+
+    content += ("<p1><br>   </p1>");
     content += addGreenhouseData();
 
-    content +=("<p5><br>Current Outside Temperature: ");
-    content +=(APITemperature);
+    content += ("<p5><br>Current Outside Temperature: ");
+    content += (APITemperature);
     content += "*C </p5>";
 
-    content +=("<p6><br>Current Outside Humidity: </p6>");
-    content +=(APIHumidity);
-    content +=("%</p6>");
+    content += ("<p6><br>Current Outside Humidity: </p6>");
+    content += (APIHumidity);
+    content += ("%</p6>");
 
     content += ("<p7><br>Current Outside Pressure: ");
     content += (APIPressure);
@@ -470,11 +473,11 @@ void handleRoot() { //webpage for authorized users
     content += ("<p><a href=\"/watering/plants\"><button class=\"button buttonWater\">Water the Plants</button></a></p>");
 
     content += "<p11>You can access this page until you <a href=\"/login?DISCONNECT=YES\">disconnect</a></p11></body></html>";
-                  
+
     server.send(200, "text/html", content); //display everything
 
-}
-  
+  }
+
 } // end handleRoot
 
 
@@ -504,8 +507,8 @@ void updateWeather() { //update weather from API
     line = client.readStringUntil('\n');
     JSONVar myObject = JSON.parse(line);
 
-    APITemperature = myObject["current"]["temp"]; 
-    APITemperature = (APITemperature-32.0)*(5.0/9.0);  //convert to celsius
+    APITemperature = myObject["current"]["temp"];
+    APITemperature = (APITemperature - 32.0) * (5.0 / 9.0); //convert to celsius
     APIHumidity = myObject["current"]["humidity"];
     APIPressure = myObject["current"]["pressure"];
   }
@@ -513,10 +516,10 @@ void updateWeather() { //update weather from API
 
 
 void setup() {
-
+  int counter = 0;
   Serial.begin(115200);
 
-  Heltec.begin(false /*Display Enable*/, true /*LoRa Enable*/, true /*Serial Enable*/,true /*PABOOST Enable*/, BAND /*long BAND*/); 
+  Heltec.begin(false /*Display Enable*/, true /*LoRa Enable*/, true /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
   Serial.println("Heltec.LoRa Duplex");
   LoRa.setSpreadingFactor(8);
   Serial.println();
@@ -526,8 +529,12 @@ void setup() {
   WiFi.begin(ssid, pass);
 
   while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
+    delay(500);
+    Serial.print(".");
+    counter++;
+    if (counter >= 60) { //after 30 seconds timeout - reset board
+      ESP.restart();
+    }
   }
 
   Serial.println("");
@@ -537,7 +544,7 @@ void setup() {
   delay(1000);
 
   updateWeather();
-  
+
   server.on("/", handleRoot);
   server.on("/login", handleLogin);
   server.on("/music/on", musicOn);
@@ -556,44 +563,52 @@ void setup() {
 
 void loop() {
 
-  if(waterOn){
+  if (waterOn) {
     waterOn = false;
     String message = ""; //send water on
     sendMessage(water_plants);
     Serial.println("Sending " + message);
   }
-  if(turnOnMusic){
+  if (turnOnMusic) {
     turnOnMusic = false;
     String message = "Turn on music";
     sendMessage(play_song);
     Serial.println("Sending " + message);
   }
-  if(openWindow){
+  if (openWindow) {
     openWindow = false;
     String message = "Open window";
     sendMessage(open_window);
     Serial.println("Sending " + message);
   }
-  if(closeWindow){
+  if (closeWindow) {
     closeWindow = false;
     String message = "Close window";
     sendMessage(close_window);
     Serial.println("Sending " + message);
   }
 
-  if(currentTime - previousAPImillis >= oneminute){
+  if (currentTime - previousAPImillis >= oneminute) {
     previousAPImillis = currentTime;
     numminutes++;
-    if(numminutes == 60){
+    if (numminutes == 60) {
       numminutes = 0;
       updateWeather();
     }
   }
 
-   onReceive(LoRa.parsePacket());
+  onReceive(LoRa.parsePacket());
 
   server.handleClient();
 
+  if (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.print("wifi disconnected");
+      ESP.restart();
+    }
+
+  }
 
 } //end loop
 
@@ -630,64 +645,64 @@ void handleLogin() { //webpage for unauthorized users
     msg = "Wrong username/password! try again.";
     Serial.println("Log in Failed");
   }
-            
-    //send HTML response
-    // Display the HTML web page
-    String content ="<!DOCTYPE html><html>";
 
-    content +=("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-    content += "<meta http-equiv=\"refresh\" content=\"30\">";
-    content +=("<link rel=\"icon\" href=\"data:,\">");
-    content +=("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
-    // CSS to style the on/off buttons 
-    // Feel free to change the background-color and font-size attributes to fit your preferences
-    content +=("<style>html { font-family: Helvetica fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
-    content +=(".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
-    content +=(".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
-    content +=("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
-              
-              
-    // Web Page Heading
-    content +=("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+  //send HTML response
+  // Display the HTML web page
+  String content = "<!DOCTYPE html><html>";
 
-    if(musicPlaying == true){
-      content += ("<i class=\"fas fa-music\"></i>"); //music note
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-      
-      content += ("<i class=\"fas fa-music\"></i>"); //repeat
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-      
-      content += ("<i class=\"fas fa-music\"></i>"); //repeat
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-      
-      content += ("<i class=\"fas fa-music\"></i>"); //repeat
-      content += ("<i class=\"fas fa-volume-up\"></i>");
-      content += ("<i class=\"fas fa-guitar\"></i>");
-      content += ("<i class=\"fas fa-headphones-alt\"></i>");
-      content += ("<i class=\"fas fa-sliders-h\"></i>");
-      content += ("<i class=\"fas fa-drum\"></i>");
-      content += ("<i class=\"fas fa-microphone-alt\"></i>");
-    
-    } else {
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+  content += ("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+  content += "<meta http-equiv=\"refresh\" content=\"30\">";
+  content += ("<link rel=\"icon\" href=\"data:,\">");
+  content += ("<script src=\"https://kit.fontawesome.com/a7900b886b.js\" crossorigin=\"anonymous\"></script>");
+  // CSS to style the on/off buttons
+  // Feel free to change the background-color and font-size attributes to fit your preferences
+  content += ("<style>html { font-family: Helvetica fantasy; font-size: 20px; display: inline-block; margin: 0px auto; text-align: center;}");
+  content += (".buttonWater { background-color: #1AB5F0; border: 6xp dotted solid double light blue; color: #0C0089; padding: 10px 20px;");
+  content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+  content += (".buttonMusic {background-color: #AA7DE0;border: 6xp dotted solid double light blue; color: #3B0B48; padding: 10px 20px;");
+  content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}");
+  content += (".buttonWindow {background-color: #31CB7C; border: 6xp dotted solid double light blue; color: #05480B; padding: 10px 20px;");
+  content += ("text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}</style></head>");
+
+
+  // Web Page Heading
+  content += ("<body><h1>ESP32 Web Server for IoT Greenhouse</h1>");
+
+  if (musicPlaying == true) {
+    content += ("<i class=\"fas fa-music\"></i>"); //music note
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+    content += ("<i class=\"fas fa-music\"></i>"); //repeat
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+    content += ("<i class=\"fas fa-music\"></i>"); //repeat
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+    content += ("<i class=\"fas fa-music\"></i>"); //repeat
+    content += ("<i class=\"fas fa-volume-up\"></i>");
+    content += ("<i class=\"fas fa-guitar\"></i>");
+    content += ("<i class=\"fas fa-headphones-alt\"></i>");
+    content += ("<i class=\"fas fa-sliders-h\"></i>");
+    content += ("<i class=\"fas fa-drum\"></i>");
+    content += ("<i class=\"fas fa-microphone-alt\"></i>");
+
+  } else {
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -697,8 +712,8 @@ void handleLogin() { //webpage for unauthorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -708,8 +723,8 @@ void handleLogin() { //webpage for unauthorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    
-    content +=("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
+
+    content += ("<i class=\"fab fa-canadian-maple-leaf\"></i>"); //leaf
     content += ("<i class=\"fas fa-sun\"></i>");
     content += ("<i class=\"fas fa-holly-berry\"></i>"); //holly
     content += ("<i class=\"fas fa-rainbow\"></i>");
@@ -719,32 +734,32 @@ void handleLogin() { //webpage for unauthorized users
     content += ("<i class=\"fas fa-wind\"></i>");
     content += ("<i class=\"fas fa-tree\"></i>");
     content += ("<i class=\"fas fa-cloud-sun\"></i>");
-    } //end icon prints
-    
-    content +=("<p1><br>   </p1>");
-    content +=addGreenhouseData();
+  } //end icon prints
 
-    content +=("<p5><br>Current Outside Temperature: ");
-    content +=(APITemperature);   
-    content += "*C </p5>";
+  content += ("<p1><br>   </p1>");
+  content += addGreenhouseData();
 
-    content +=("<p6><br>Current Outside Humidity: ");
-    content +=(APIHumidity);
-    content += "%</p6>";
+  content += ("<p5><br>Current Outside Temperature: ");
+  content += (APITemperature);
+  content += "*C </p5>";
 
-    content += ("<p7><br>Current Outside Pressure: ");
-    content += (APIPressure);
-    content += " hPa</p8>";
-  
-    content += "<form action='/login' method='POST'>Please log in to access Temperature Control<br>";
-    content += "User:<input type='text' name='USERNAME' placeholder='user name'><br>";
-    content += "Password:<input type='password' name='PASSWORD' placeholder='password'><br>";
-    content += "<input type='submit' name='SUBMIT' value='Submit'></form><br>";
+  content += ("<p6><br>Current Outside Humidity: ");
+  content += (APIHumidity);
+  content += "%</p6>";
 
-    content +=("</body></html>");
+  content += ("<p7><br>Current Outside Pressure: ");
+  content += (APIPressure);
+  content += " hPa</p8>";
 
-    server.send(200, "text/html", content);
-    
+  content += "<form action='/login' method='POST'>Please log in to access Temperature Control<br>";
+  content += "User:<input type='text' name='USERNAME' placeholder='user name'><br>";
+  content += "Password:<input type='password' name='PASSWORD' placeholder='password'><br>";
+  content += "<input type='submit' name='SUBMIT' value='Submit'></form><br>";
+
+  content += ("</body></html>");
+
+  server.send(200, "text/html", content);
+
 } //end handleLogin
 
 
@@ -778,7 +793,7 @@ void onReceive(int packetSize)
   }
 
   if (incomingLength != incoming.length())
-  {   // check length for error
+  { // check length for error
     Serial.println("error: message length does not match length");
     return;                             // skip rest of function
   }
@@ -800,18 +815,18 @@ void onReceive(int packetSize)
   Serial.println();
 
   char buffer[50];
-  incoming.toCharArray(buffer,50);
+  incoming.toCharArray(buffer, 50);
   //char myPlantData[5];
   String remaining = incoming;
   int comma = remaining.indexOf(',');
   int i = 0;
-  while(comma !=-1){
+  while (comma != -1) {
     myPlantData[i] = remaining.substring(0, comma);
-    remaining = remaining.substring(comma+1);
+    remaining = remaining.substring(comma + 1);
     comma = remaining.indexOf(',');
     i++;
   }
-  myPlantData[i]=remaining;
+  myPlantData[i] = remaining;
   Serial.println(incoming);
   Serial.println("Temp is: " + myPlantData[0] );
   Serial.println("Humidity is: " + myPlantData[1]);
@@ -823,28 +838,27 @@ void onReceive(int packetSize)
 } //end onRecieve
 
 
-String addGreenhouseData(){
-    String lines;
-    lines +=("<p1><br> Location: Terre Haute, Indiana</p1>");
-    lines +=("<p2><br>Greenhouse Temperature: "); //print current Temp value
-    lines += (String)myPlantData[0];
-    lines += "*C </p2>";
-    
-    lines +=("<p3><br>Greenhouse Humidity: </p3>"); //print current humidity value
-    lines += (String)myPlantData[1];
+String addGreenhouseData() {
+  String lines;
+  lines += ("<p1><br> Location: Terre Haute, Indiana</p1>");
+  lines += ("<p2><br>Greenhouse Temperature: "); //print current Temp value
+  lines += (String)myPlantData[0];
+  lines += "*C </p2>";
 
-    lines += ("<p4><br>Soil Moisture Level: </p4>");
-    lines += (String)myPlantData[2];
-    
-    lines +=("<p5><br>Greenhouse Pressure: ");
-    lines += (String)myPlantData[3];
-    lines += " hPa </p5>";
+  lines += ("<p3><br>Greenhouse Humidity: </p3>"); //print current humidity value
+  lines += (String)myPlantData[1];
 
-    lines +=("<p6><br>Greenhouse Altitude: ");
-    lines += (String)myPlantData[4];
-    lines += " m</p6>";
+  lines += ("<p4><br>Soil Moisture Level: </p4>");
+  lines += (String)myPlantData[2];
 
-    return lines;
-    
+  lines += ("<p5><br>Greenhouse Pressure: ");
+  lines += (String)myPlantData[3];
+  lines += " hPa </p5>";
+
+  lines += ("<p6><br>Greenhouse Altitude: ");
+  lines += (String)myPlantData[4];
+  lines += " m</p6>";
+
+  return lines;
+
 }
-         
