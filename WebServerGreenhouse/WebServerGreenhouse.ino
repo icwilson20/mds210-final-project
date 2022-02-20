@@ -594,6 +594,7 @@ void loop() {
     if (numminutes == 60) {
       numminutes = 0;
       updateWeather();
+      Serial.println("Weather Updated");
     }
   }
 
